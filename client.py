@@ -1,12 +1,11 @@
 import socket
 import os
 import re
+import sys
 
-# The IP address of the server
-HOST = "127.0.0.1"
-
-# The port on which our HTTP server is listening
-PORT = 8080
+# Get the server host and port from command-line arguments, defaulting to localhost:8080
+HOST = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
+PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
 
 
 # Fetch a resource using the same HTTP client logic
