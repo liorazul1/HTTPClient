@@ -82,6 +82,17 @@ while len(body) < content_length:
         break
 
     body += chunk
+    
+# Handle HTTP status codes
+if status_code == 200:
+    print(f"Success: {status_code} {reason_phrase}")
+
+elif status_code in (301, 302):
+    location = headers.get("location", "Location header not found")
+    print(f"Redirect: {status_code} {reason_phrase} -> {location}")
+
+elif 400 <= status_code <= 599:
+    print(f"Error: {status_code} {reason_phrase}")
 
 # Close the socket after the connection test is complete
 client_socket.close()
