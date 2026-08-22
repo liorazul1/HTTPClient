@@ -46,6 +46,12 @@ def fetch_resource(request_path):
             break
 
         response_data += chunk
+        
+    # Handle a malformed response without crashing
+    if b"\r\n\r\n" not in response_data:
+        print("Error: Malformed HTTP response")
+        client_socket.close()
+        return []
 
     # Separate the HTTP headers from the response body
     header_data, body = response_data.split(b"\r\n\r\n", 1)
@@ -56,9 +62,21 @@ def fetch_resource(request_path):
     # Parse the HTTP status line
     header_lines = header_text.split("\r\n")
     status_line = header_lines[0]
+    
+    status_parts = status_line.split(" ", 2)
 
-    http_version, status_code, reason_phrase = status_line.split(" ", 2)
-    status_code = int(status_code)
+    if len(status_parts) != 3:
+        print("Error: Malformed HTTP status line")
+        client_socket.close()
+        return []
+
+    http_version, status_code, reason_phrase = status_parts
+    try:
+        status_code = int(status_code)
+    except ValueError:
+        print("Error: Malformed HTTP status code")
+        client_socket.close()
+        return []
 
     # Parse all HTTP headers into a structured dictionary
     headers = {}
@@ -68,13 +86,23 @@ def fetch_resource(request_path):
             header_name, header_value = line.split(":", 1)
             headers[header_name.strip().lower()] = header_value.strip()
 
-    content_length = 0
+    content_length = None
 
     for line in header_text.split("\r\n"):
         if line.lower().startswith("content-length:"):
-            content_length = int(line.split(":", 1)[1].strip())
+            try:
+                content_length = int(line.split(":", 1)[1].strip())
+            except ValueError:
+                print("Error: Malformed Content-Length header")
+                client_socket.close()
+                return []
             break
-
+        
+    if content_length is None:
+        print("Error: Missing Content-Length header")
+        client_socket.close()
+        return []
+    
     # Read exactly Content-Length bytes for the body
     while len(body) < content_length:
 
@@ -89,6 +117,12 @@ def fetch_resource(request_path):
 
         body += chunk
         
+    # Handle an incomplete response body without crashing
+    if len(body) != content_length:
+        print("Error: Incomplete HTTP response body")
+        client_socket.close()
+        return []
+            
     # Handle HTTP status codes
     embedded_resources = []
     
