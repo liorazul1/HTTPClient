@@ -47,6 +47,21 @@ header_data, body = response_data.split(b"\r\n\r\n", 1)
 # Decode the headers so Content-Length can be read
 header_text = header_data.decode("ascii", errors="ignore")
 
+# Parse the HTTP status line
+header_lines = header_text.split("\r\n")
+status_line = header_lines[0]
+
+http_version, status_code, reason_phrase = status_line.split(" ", 2)
+status_code = int(status_code)
+
+# Parse all HTTP headers into a structured dictionary
+headers = {}
+
+for line in header_lines[1:]:
+    if ":" in line:
+        header_name, header_value = line.split(":", 1)
+        headers[header_name.strip().lower()] = header_value.strip()
+
 content_length = 0
 
 for line in header_text.split("\r\n"):
@@ -67,8 +82,6 @@ while len(body) < content_length:
         break
 
     body += chunk
-
-print(f"Connected to {HOST}:{PORT}")
 
 # Close the socket after the connection test is complete
 client_socket.close()
