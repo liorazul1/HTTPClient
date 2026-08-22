@@ -24,5 +24,8 @@ request = (
     "\r\n"
 )
 
+# Send the HTTP/1.0 GET request over the socket
+client_socket.sendall(request.encode("ascii"))
+
 # Close the socket after the connection test is complete
 client_socket.close()
