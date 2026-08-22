@@ -1,4 +1,5 @@
 import socket
+import os
 
 # The IP address of the server
 HOST = "127.0.0.1"
@@ -17,9 +18,12 @@ client_socket.connect((HOST, PORT))
 
 print(f"Connected to {HOST}:{PORT}")
 
+# The resource path requested from the server
+REQUEST_PATH = "/pages/index.html"
+
 # Build a valid HTTP/1.0 GET request manually as raw text.
 request = (
-    "GET /pages/index.html HTTP/1.0\r\n"
+    f"GET {REQUEST_PATH} HTTP/1.0\r\n"
     f"Host: {HOST}\r\n"
     "\r\n"
 )
@@ -86,6 +90,21 @@ while len(body) < content_length:
 # Handle HTTP status codes
 if status_code == 200:
     print(f"Success: {status_code} {reason_phrase}")
+    
+    # Save every successfully fetched resource to a local output directory
+    os.makedirs("output", exist_ok=True)
+
+    filename = os.path.basename(REQUEST_PATH)
+
+    if not filename:
+        filename = "index.html"
+
+    output_path = os.path.join("output", filename)
+
+    with open(output_path, "wb") as file:
+        file.write(body)
+
+    print(f"Saved: {output_path}")
 
 elif status_code in (301, 302):
     location = headers.get("location", "Location header not found")
@@ -94,5 +113,5 @@ elif status_code in (301, 302):
 elif 400 <= status_code <= 599:
     print(f"Error: {status_code} {reason_phrase}")
 
-# Close the socket after the connection test is complete
+# Close the socket after the request-response exchange is complete
 client_socket.close()
