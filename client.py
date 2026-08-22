@@ -17,5 +17,12 @@ client_socket.connect((HOST, PORT))
 
 print(f"Connected to {HOST}:{PORT}")
 
+# Build a valid HTTP/1.0 GET request manually as raw text.
+request = (
+    "GET /pages/index.html HTTP/1.0\r\n"
+    f"Host: {HOST}\r\n"
+    "\r\n"
+)
+
 # Close the socket after the connection test is complete
 client_socket.close()
