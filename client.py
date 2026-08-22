@@ -2,6 +2,7 @@ import socket
 import os
 import re
 import sys
+from urllib.parse import urlparse, urljoin
 
 # Get the server host and port from command-line arguments, defaulting to localhost:8080
 HOST = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
@@ -151,11 +152,20 @@ def fetch_resource(request_path):
             link_sources = re.findall(r'<link[^>]+href=["\']([^"\']+)["\']', html_text)
 
             for resource in img_sources + link_sources:
-                if resource.startswith("/"):
-                    embedded_resources.append(resource)
-                elif not resource.startswith(("http://", "https://")):
-                    embedded_resources.append(resource)
+                parsed_resource = urlparse(resource)
 
+                # Fetch only resources that point to the same host and port
+                if parsed_resource.hostname:
+                    resource_port = parsed_resource.port or 80
+
+                    if parsed_resource.hostname != HOST or resource_port != PORT:
+                        continue
+
+                resource_path = urljoin(request_path, resource)
+                parsed_path = urlparse(resource_path).path
+
+                embedded_resources.append(parsed_path)
+                
             print(f"Embedded resources: {embedded_resources}")
             
 
